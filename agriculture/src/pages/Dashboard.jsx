@@ -1,24 +1,32 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaLeaf, FaSeedling, FaCloudRain, FaChartLine, FaRobot, FaCalendarAlt } from 'react-icons/fa';
+import { FaLeaf, FaSeedling, FaCloudRain, FaChartLine, FaRobot, FaCalendarAlt, FaCloudSun, FaStore, FaUsers, FaSync, FaWind, FaSearch } from 'react-icons/fa';
+import { BsCloudDrizzle, BsCloudSnow, BsSun, BsMoisture } from 'react-icons/bs';
+import { WiDayLightning, WiDayWindy, WiHumidity } from 'react-icons/wi';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
 const Dashboard = ({ user }) => {
-  const [todayWeather] = useState({
-    temperature: 28,
-    humidity: 65,
-    rainfall: 0,
-    condition: 'Sunny'
-  });
+  const [currentWeather, setCurrentWeather] = useState(null);
+  const [weatherLoading, setWeatherLoading] = useState(true);
+  const [weatherError, setWeatherError] = useState(null);
+  const [location, setLocation] = useState('New York');
 
-  const [alerts] = useState([
-    { id: 1, type: 'info', message: 'Optimal time to fertilize your corn crops' },
-    { id: 2, type: 'warning', message: 'Potential pest infestation detected in sector B' },
-    { id: 3, type: 'success', message: 'Smart irrigation saved 40% water today' }
-  ]);
+  const [alerts, setAlerts] = useState([]);
 
   const [upcomingTasks, setUpcomingTasks] = useState([]);
+
+  const [taskSuggestions, setTaskSuggestions] = useState([]);
+
+  useEffect(() => {
+    // Try to get user's location when component mounts
+    getUserLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    fetchWeatherData();
+  }, [location]);
 
   useEffect(() => {
     const fetchAnalysis = async () => {
@@ -61,6 +69,107 @@ const Dashboard = ({ user }) => {
     fetchAnalysis();
   }, []);
 
+  useEffect(() => {
+    if (currentWeather) {
+      // Generate weather-based alerts when weather data is available
+      const weatherAlerts = generateWeatherAlerts(currentWeather);
+      setAlerts(weatherAlerts);
+      
+      // Generate weather-based tasks
+      const weatherTasks = generateWeatherTasks(currentWeather);
+      
+      // Combine with existing tasks from analysis
+      setTaskSuggestions(weatherTasks);
+    }
+  }, [currentWeather]);
+
+  const getUserLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setLocation(`${latitude},${longitude}`);
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          // Keep the default location if geolocation fails
+        },
+        { timeout: 10000, maximumAge: 60000 }
+      );
+    } else {
+      setWeatherError("Geolocation is not supported by this browser");
+    }
+  };
+
+  const fetchWeatherData = async () => {
+    setWeatherLoading(true);
+    try {
+      const API_KEY = 'b7db56bcadd84abf9d9154542250104';
+      const BASE_URL = 'https://api.weatherapi.com/v1';
+      
+      // Current weather data
+      const currentResponse = await axios.get(`${BASE_URL}/current.json`, {
+        params: {
+          key: API_KEY,
+          q: location,
+          aqi: 'no'
+        }
+      });
+      
+      if (currentResponse.data) {
+        // Process current weather
+        const current = currentResponse.data.current;
+        const locationData = currentResponse.data.location;
+        
+        setCurrentWeather({
+          temperature: current.temp_c,
+          condition: current.condition.text,
+          humidity: current.humidity,
+          windSpeed: current.wind_kph,
+          precipitation: current.precip_mm,
+          pressure: current.pressure_mb,
+          uvIndex: current.uv,
+          feelsLike: current.feelslike_c,
+          icon: current.condition.icon,
+          lastUpdated: current.last_updated,
+          locationName: `${locationData.name}, ${locationData.country}`
+        });
+      }
+      
+      setWeatherLoading(false);
+    } catch (err) {
+      console.error('Error fetching weather data:', err);
+      setWeatherError('Failed to fetch weather data. Please try again later.');
+      setWeatherLoading(false);
+    }
+  };
+
+  const getWeatherIcon = (condition, icon) => {
+    // If we have an icon URL from the API, use it
+    if (icon) {
+      return <img src={`https:${icon}`} alt={condition} className="w-12 h-12" />;
+    }
+    
+    // Fallback to our custom icons
+    const conditionLower = condition?.toLowerCase() || '';
+    
+    if (conditionLower.includes('sunny') || conditionLower.includes('clear')) {
+      return <BsSun className="text-yellow-500 text-5xl" />;
+    } else if (conditionLower.includes('partly cloudy') || conditionLower.includes('cloudy')) {
+      return <FaCloudSun className="text-gray-400 text-5xl" />;
+    } else if (conditionLower.includes('rain') || conditionLower.includes('drizzle')) {
+      return <BsCloudDrizzle className="text-blue-400 text-5xl" />;
+    } else if (conditionLower.includes('thunder') || conditionLower.includes('lightning')) {
+      return <WiDayLightning className="text-purple-500 text-5xl" />;
+    } else if (conditionLower.includes('snow')) {
+      return <BsCloudSnow className="text-blue-200 text-5xl" />;
+    } else if (conditionLower.includes('wind')) {
+      return <WiDayWindy className="text-gray-400 text-5xl" />;
+    } else {
+      return <FaCloudSun className="text-gray-400 text-5xl" />;
+    }
+  };
+
   const markTaskAsDone = async (analysisId, type) => {
     try {
       const token = localStorage.getItem('token');
@@ -75,6 +184,143 @@ const Dashboard = ({ user }) => {
     } catch (error) {
       console.error('Error updating analysis:', error);
     }
+  };
+
+  const generateWeatherAlerts = (weather) => {
+    if (!weather) return [];
+    
+    const newAlerts = [];
+    
+    // Temperature-based alerts
+    if (weather.temperature > 30) {
+      newAlerts.push({
+        id: 'high-temp-' + Date.now(),
+        type: 'warning', 
+        message: `High temperature alert (${weather.temperature}°C). Consider increasing irrigation.`
+      });
+    }
+    
+    // Humidity-based alerts
+    if (weather.humidity > 80) {
+      newAlerts.push({
+        id: 'high-humidity-' + Date.now(),
+        type: 'warning',
+        message: `High humidity (${weather.humidity}%). Monitor crops for fungal diseases.`
+      });
+    } else if (weather.humidity < 30) {
+      newAlerts.push({
+        id: 'low-humidity-' + Date.now(),
+        type: 'warning',
+        message: `Low humidity (${weather.humidity}%). Crops may need additional water.`
+      });
+    }
+    
+    // Precipitation-based alerts
+    if (weather.precipitation > 5) {
+      newAlerts.push({
+        id: 'heavy-rain-' + Date.now(),
+        type: 'info',
+        message: `Significant rainfall detected (${weather.precipitation}mm). Skip irrigation today.`
+      });
+    } else if (weather.precipitation < 0.5 && weather.temperature > 25) {
+      newAlerts.push({
+        id: 'dry-condition-' + Date.now(),
+        type: 'warning',
+        message: 'Dry conditions detected. Consider irrigation for vulnerable crops.'
+      });
+    }
+    
+    // Wind-based alerts
+    if (weather.windSpeed > 20) {
+      newAlerts.push({
+        id: 'high-wind-' + Date.now(),
+        type: 'warning',
+        message: `High wind speeds (${weather.windSpeed}km/h). Delay pesticide application.`
+      });
+    }
+    
+    return newAlerts;
+  };
+
+  const generateWeatherTasks = (weather) => {
+    if (!weather) return [];
+    
+    const tasks = [];
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+    const tomorrow = new Date(Date.now() + 86400000).toLocaleDateString('en-US', { weekday: 'long' });
+    
+    // Temperature-based tasks
+    if (weather.temperature > 30) {
+      tasks.push({
+        id: 'water-crops-' + Date.now(),
+        date: "Today",
+        title: "Increase Irrigation for All Crops",
+        description: `High temperature (${weather.temperature}°C) detected`,
+        priority: "high"
+      });
+    }
+    
+    // Humidity-based tasks
+    if (weather.humidity > 80) {
+      tasks.push({
+        id: 'check-fungal-' + Date.now(),
+        date: "Today",
+        title: "Check Crops for Fungal Disease",
+        description: `High humidity (${weather.humidity}%) increases disease risk`,
+        priority: "medium"
+      });
+    }
+    
+    // Low humidity task
+    if (weather.humidity < 30) {
+      tasks.push({
+        id: 'water-sensitive-' + Date.now(),
+        date: "Today",
+        title: "Water Sensitive Crops",
+        description: "Low humidity may cause water stress",
+        priority: "medium"
+      });
+    }
+    
+    // Precipitation-based tasks
+    if (weather.precipitation > 5) {
+      tasks.push({
+        id: 'skip-irrigation-' + Date.now(),
+        date: "Today",
+        title: "Skip Today's Irrigation",
+        description: `Sufficient rainfall (${weather.precipitation}mm) recorded`,
+        priority: "low"
+      });
+    } else if (weather.precipitation < 0.5 && weather.temperature > 25) {
+      tasks.push({
+        id: 'water-crops-' + Date.now(),
+        date: "Today",
+        title: "Water Drought-Sensitive Crops",
+        description: "Dry conditions detected",
+        priority: "high"
+      });
+    }
+    
+    // Wind-based tasks
+    if (weather.windSpeed > 20) {
+      tasks.push({
+        id: 'delay-spraying-' + Date.now(),
+        date: "Today",
+        title: "Delay Pesticide/Fertilizer Application",
+        description: `High wind (${weather.windSpeed}km/h) will affect spraying`,
+        priority: "high"
+      });
+    } else if (weather.windSpeed < 10 && weather.precipitation < 1) {
+      tasks.push({
+        id: 'ideal-spraying-' + Date.now(),
+        date: tomorrow,
+        title: "Optimal Time for Fertilizer Application",
+        description: "Calm winds and dry conditions predicted",
+        priority: "medium"
+      });
+    }
+    
+    return tasks;
   };
 
   return (
@@ -102,7 +348,7 @@ const Dashboard = ({ user }) => {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="mb-6"
             >
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Recent Alerts</h2>
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Weather Alerts</h2>
               <div className="space-y-3">
                 {alerts.map((alert) => (
                   <motion.div
@@ -121,6 +367,16 @@ const Dashboard = ({ user }) => {
                     {alert.message}
                   </motion.div>
                 ))}
+                {alerts.length === 0 && !weatherLoading && !weatherError && (
+                  <div className="p-4 rounded-lg bg-green-50 border-l-4 border-green-500 text-green-700">
+                    No weather alerts for today. Conditions look good for farming activities.
+                  </div>
+                )}
+                {weatherLoading && (
+                  <div className="p-4 rounded-lg bg-blue-50 border-l-4 border-blue-500 text-blue-700">
+                    Loading weather data to generate alerts...
+                  </div>
+                )}
               </div>
             </motion.div>
 
@@ -230,24 +486,27 @@ const Dashboard = ({ user }) => {
               </h2>
               <div className="bg-white rounded-xl shadow-md overflow-hidden">
                 <div className="p-6">
-                  <CalendarEvent 
-                    date="Today"
-                    title="Fertilize Tomato Crops"
-                    description="Apply organic fertilizer to sector A"
-                    priority="high"
-                  />
-                  <CalendarEvent 
-                    date="Tomorrow"
-                    title="Check Irrigation System"
-                    description="Maintenance of drip irrigation in sector C"
-                    priority="medium"
-                  />
-                  <CalendarEvent 
-                    date="Nov 25"
-                    title="Harvest Corn"
-                    description="Optimal time based on predictive analysis"
-                    priority="low"
-                  />
+                  {taskSuggestions.map((task) => (
+                    <div key={task.id} className="flex items-start mb-4 last:mb-0">
+                      <div className="bg-green-100 text-green-800 px-3 py-1 rounded font-medium text-sm w-24 text-center">
+                        {task.date}
+                      </div>
+                      <div className="ml-4 flex-1">
+                        <h4 className="font-medium text-gray-800">{task.title}</h4>
+                        <p className="text-sm text-gray-600">{task.description}</p>
+                      </div>
+                      <div className={`${
+                        task.priority === 'high' ? "bg-red-100 text-red-800" : 
+                        task.priority === 'medium' ? "bg-yellow-100 text-yellow-800" : 
+                        "bg-blue-100 text-blue-800"
+                      } px-3 py-1 rounded-full text-xs`}>
+                        {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                      </div>
+                    </div>
+                  ))}
+                  {taskSuggestions.length === 0 && (
+                    <p className="text-gray-600 text-center py-4">No weather-based tasks available. Check back after weather data loads.</p>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -260,28 +519,116 @@ const Dashboard = ({ user }) => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Today's Weather</h2>
-              <div className="bg-gradient-to-r from-blue-500 to-cyan-600 rounded-2xl text-white p-6 shadow-lg">
-                <div className="flex flex-row justify-between items-center">
-                  <div className="flex items-center">
-                    <div className="mr-4 text-5xl">☀️</div>
-                    <div>
-                      <p className="text-2xl font-bold">{todayWeather.temperature}°C</p>
-                      <p>{todayWeather.condition}</p>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-gray-800">Today's Weather</h2>
+                <div className="flex items-center space-x-2">
+                  <button 
+                    onClick={() => getUserLocation()}
+                    className="text-gray-500 hover:text-gray-700 transition"
+                    title="Use my location"
+                  >
+                    <FaMapMarkerAlt className="h-4 w-4" />
+                  </button>
+                  <button 
+                    onClick={fetchWeatherData} 
+                    className="text-gray-500 hover:text-gray-700 transition"
+                    title="Refresh weather data"
+                  >
+                    <FaSync className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="mb-4 flex items-center">
+                <div className="relative flex-grow">
+                  <input
+                    type="text"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && fetchWeatherData()}
+                    placeholder="Enter location (city, ZIP, coordinates)"
+                    className="w-full pl-3 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  />
+                  <button 
+                    onClick={fetchWeatherData}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <FaSearch className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+              
+              {weatherLoading ? (
+                <div className="bg-white rounded-2xl p-8 shadow-lg flex justify-center items-center">
+                  <motion.div
+                    className="w-10 h-10 border-t-4 border-blue-500 border-solid rounded-full"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  />
+                </div>
+              ) : weatherError ? (
+                <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200">
+                  <p>{weatherError}</p>
+                  <button 
+                    onClick={fetchWeatherData}
+                    className="mt-2 text-sm underline"
+                  >
+                    Try again
+                  </button>
+                </div>
+              ) : currentWeather && (
+                <div className="bg-gradient-to-r from-blue-500 to-cyan-600 rounded-2xl text-white overflow-hidden shadow-lg">
+                  <div className="p-4 bg-blue-600/30">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center">
+                        <FaMapMarkerAlt className="h-4 w-4 text-blue-100 mr-1" />
+                        <span className="text-blue-50 text-sm">{currentWeather.locationName}</span>
+                      </div>
+                      <div className="text-blue-50 text-xs">
+                        Updated: {new Date(currentWeather.lastUpdated).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 gap-3">
-                    <div className="text-center">
-                      <p className="text-xs text-blue-100">Humidity</p>
-                      <p className="text-lg font-semibold">{todayWeather.humidity}%</p>
+                  
+                  <div className="p-6">
+                    <div className="flex items-center mb-6">
+                      <div className="mr-4">
+                        {getWeatherIcon(currentWeather.condition, currentWeather.icon)}
+                      </div>
+                      <div>
+                        <p className="text-4xl font-bold">{currentWeather.temperature}°C</p>
+                        <p className="text-blue-100 capitalize">{currentWeather.condition}</p>
+                        <p className="text-xs text-blue-100">Feels like: {currentWeather.feelsLike}°C</p>
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <p className="text-xs text-blue-100">Rainfall</p>
-                      <p className="text-lg font-semibold">{todayWeather.rainfall} mm</p>
+                    
+                    <div className="grid grid-cols-2 gap-4 text-center">
+                      <div className="bg-white/10 p-3 rounded-lg">
+                        <WiHumidity className="inline-block h-6 w-6 text-blue-100 mb-1" />
+                        <p className="text-xs text-blue-100">Humidity</p>
+                        <p className="text-xl font-semibold">{currentWeather.humidity}%</p>
+                      </div>
+                      <div className="bg-white/10 p-3 rounded-lg">
+                        <FaWind className="inline-block h-5 w-5 text-blue-100 mb-1" />
+                        <p className="text-xs text-blue-100">Wind</p>
+                        <p className="text-xl font-semibold">{currentWeather.windSpeed} km/h</p>
+                      </div>
+                      <div className="bg-white/10 p-3 rounded-lg col-span-2">
+                        <BsMoisture className="inline-block h-5 w-5 text-blue-100 mb-1" />
+                        <p className="text-xs text-blue-100">Precipitation</p>
+                        <p className="text-xl font-semibold">{currentWeather.precipitation} mm</p>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 pt-3 border-t border-white/20 text-center">
+                      <Link to="/weather-scheduling" className="text-blue-100 text-sm hover:text-white inline-flex items-center">
+                        <FaCalendarAlt className="mr-1 h-3 w-3" />
+                        <span>View 5-day forecast</span>
+                      </Link>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </motion.div>
 
             {/* Quick Actions Section */}
@@ -309,20 +656,36 @@ const Dashboard = ({ user }) => {
                   delay={0.1}
                 />
                 <QuickAction 
+                  to="/weather-scheduling"
+                  icon={<FaCloudSun size={20} />}
+                  title="Weather Scheduling"
+                  description="Plan tasks based on forecasts"
+                  color="bg-sky-500"
+                  delay={0.2}
+                />
+                <QuickAction 
+                  to="/community"
+                  icon={<FaUsers size={20} />}
+                  title="Knowledge Community"
+                  description="Connect with other farmers"
+                  color="bg-indigo-500"
+                  delay={0.3}
+                />
+                <QuickAction 
                   to="/predictive-analysis"
                   icon={<FaChartLine size={20} />}
                   title="Predictive Analysis"
-                  description="Forecast yields and markets"
+                  description="Forecast yields and prices"
                   color="bg-purple-500"
-                  delay={0.2}
+                  delay={0.4}
                 />
                 <QuickAction 
                   to="/chatbot"
                   icon={<FaRobot size={20} />}
                   title="Farm Assistant"
-                  description="Get AI-powered advice"
-                  color="bg-amber-500"
-                  delay={0.3}
+                  description="Get instant farming advice"
+                  color="bg-emerald-500"
+                  delay={0.5}
                 />
               </div>
             </motion.div>
@@ -358,30 +721,6 @@ const QuickAction = ({ to, icon, title, description, color, delay }) => {
         </div>
       </Link>
     </motion.div>
-  );
-};
-
-// Calendar Event Component
-const CalendarEvent = ({ date, title, description, priority }) => {
-  const priorityStyles = {
-    high: "bg-red-100 text-red-800",
-    medium: "bg-yellow-100 text-yellow-800",
-    low: "bg-blue-100 text-blue-800"
-  };
-
-  return (
-    <div className="flex items-start mb-4 last:mb-0">
-      <div className="bg-green-100 text-green-800 px-3 py-1 rounded font-medium text-sm w-24 text-center">
-        {date}
-      </div>
-      <div className="ml-4 flex-1">
-        <h4 className="font-medium text-gray-800">{title}</h4>
-        <p className="text-sm text-gray-600">{description}</p>
-      </div>
-      <div className={`${priorityStyles[priority]} px-3 py-1 rounded-full text-xs`}>
-        {priority.charAt(0).toUpperCase() + priority.slice(1)}
-      </div>
-    </div>
   );
 };
 

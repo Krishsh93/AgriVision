@@ -1,12 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaLeaf, FaUser, FaBars, FaTimes, FaSignOutAlt } from 'react-icons/fa';
+import { FaLeaf, FaUser, FaBars, FaTimes, FaSignOutAlt, FaCloudSun, FaUsers, FaMicroscope, FaWater, FaChartLine, FaRobot } from 'react-icons/fa';
 
 const Navbar = ({ isAuthenticated, user, logout }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  
+  // Array of navigation links
+  const navLinks = [
+    { name: 'Dashboard', path: '/dashboard' },
+    { name: 'Leaf Analysis', path: '/leaf-analysis' },
+    { name: 'Smart Irrigation', path: '/smart-irrigation' },
+    { name: 'Weather Planning', path: '/weather-scheduling' },
+    { name: 'Community', path: '/community' },
+    { name: 'Chatbot', path: '/chatbot' },
+  ];
   
   // For dashboard and other authenticated routes, always show solid background
   const isDashboardOrAuth = isAuthenticated || 
@@ -14,7 +24,9 @@ const Navbar = ({ isAuthenticated, user, logout }) => {
     location.pathname.includes('/leaf-analysis') ||
     location.pathname.includes('/smart-irrigation') ||
     location.pathname.includes('/predictive-analysis') ||
-    location.pathname.includes('/chatbot');
+    location.pathname.includes('/chatbot') ||
+    location.pathname.includes('/weather-scheduling') ||
+    location.pathname.includes('/community');
 
   // Handle scroll event to change navbar style
   useEffect(() => {
@@ -76,11 +88,27 @@ const Navbar = ({ isAuthenticated, user, logout }) => {
           <div className="hidden lg:flex items-center space-x-6">
             {isAuthenticated ? (
               <>
-                <NavLink to="/dashboard" scrolled={scrolled} isDashboardOrAuth={isDashboardOrAuth}>Dashboard</NavLink>
-                <NavLink to="/leaf-analysis" scrolled={scrolled} isDashboardOrAuth={isDashboardOrAuth}>Leaf Analysis</NavLink>
-                <NavLink to="/smart-irrigation" scrolled={scrolled} isDashboardOrAuth={isDashboardOrAuth}>Smart Irrigation</NavLink>
-                <NavLink to="/predictive-analysis" scrolled={scrolled} isDashboardOrAuth={isDashboardOrAuth}>Predictive Analysis</NavLink>
-                <NavLink to="/chatbot" scrolled={scrolled} isDashboardOrAuth={isDashboardOrAuth}>Farm Assistant</NavLink>
+                <NavLink to="/dashboard" scrolled={scrolled} isDashboardOrAuth={isDashboardOrAuth}>
+                  <FaChartLine className="mr-1 inline-block" />Dashboard
+                </NavLink>
+                <NavLink to="/leaf-analysis" scrolled={scrolled} isDashboardOrAuth={isDashboardOrAuth}>
+                  <FaMicroscope className="mr-1 inline-block" />Leaf Analysis
+                </NavLink>
+                <NavLink to="/smart-irrigation" scrolled={scrolled} isDashboardOrAuth={isDashboardOrAuth}>
+                  <FaWater className="mr-1 inline-block" />Irrigation
+                </NavLink>
+                <NavLink to="/weather-scheduling" scrolled={scrolled} isDashboardOrAuth={isDashboardOrAuth}>
+                  <FaCloudSun className="mr-1 inline-block" />Weather
+                </NavLink>
+                <NavLink to="/community" scrolled={scrolled} isDashboardOrAuth={isDashboardOrAuth}>
+                  <FaUsers className="mr-1 inline-block" />Community
+                </NavLink>
+                <NavLink to="/predictive-analysis" scrolled={scrolled} isDashboardOrAuth={isDashboardOrAuth}>
+                  <FaChartLine className="mr-1 inline-block" />Analytics
+                </NavLink>
+                <NavLink to="/chatbot" scrolled={scrolled} isDashboardOrAuth={isDashboardOrAuth}>
+                  <FaRobot className="mr-1 inline-block" />Assistant
+                </NavLink>
                 
                 <div className="relative group ml-4">
                   <button className="flex items-center space-x-1 focus:outline-none">
@@ -176,11 +204,27 @@ const Navbar = ({ isAuthenticated, user, logout }) => {
                 </div>
               </div>
               
-              <Link to="/dashboard" className="p-2 text-gray-700 hover:bg-green-50 rounded-md">Dashboard</Link>
-              <Link to="/leaf-analysis" className="p-2 text-gray-700 hover:bg-green-50 rounded-md">Leaf Analysis</Link>
-              <Link to="/smart-irrigation" className="p-2 text-gray-700 hover:bg-green-50 rounded-md">Smart Irrigation</Link>
-              <Link to="/predictive-analysis" className="p-2 text-gray-700 hover:bg-green-50 rounded-md">Predictive Analysis</Link>
-              <Link to="/chatbot" className="p-2 text-gray-700 hover:bg-green-50 rounded-md">Farm Assistant</Link>
+              <Link to="/dashboard" className="p-2 text-gray-700 hover:bg-green-50 rounded-md flex items-center">
+                <FaChartLine className="mr-2" /> Dashboard
+              </Link>
+              <Link to="/leaf-analysis" className="p-2 text-gray-700 hover:bg-green-50 rounded-md flex items-center">
+                <FaMicroscope className="mr-2" /> Leaf Analysis
+              </Link>
+              <Link to="/smart-irrigation" className="p-2 text-gray-700 hover:bg-green-50 rounded-md flex items-center">
+                <FaWater className="mr-2" /> Smart Irrigation
+              </Link>
+              <Link to="/weather-scheduling" className="p-2 text-gray-700 hover:bg-green-50 rounded-md flex items-center">
+                <FaCloudSun className="mr-2" /> Weather Scheduling
+              </Link>
+              <Link to="/community" className="p-2 text-gray-700 hover:bg-green-50 rounded-md flex items-center">
+                <FaUsers className="mr-2" /> Community
+              </Link>
+              <Link to="/predictive-analysis" className="p-2 text-gray-700 hover:bg-green-50 rounded-md flex items-center">
+                <FaChartLine className="mr-2" /> Predictive Analysis
+              </Link>
+              <Link to="/chatbot" className="p-2 text-gray-700 hover:bg-green-50 rounded-md flex items-center">
+                <FaRobot className="mr-2" /> Farm Assistant
+              </Link>
               
               <button 
                 onClick={logout}
@@ -200,7 +244,7 @@ const Navbar = ({ isAuthenticated, user, logout }) => {
               </Link>
               <Link 
                 to="/register" 
-                className="w-full py-2 text-center bg-green-600 hover:bg-green-700 text-white rounded-md"
+                className="w-full py-2 text-center bg-green-600 text-white hover:bg-green-700 rounded-md"
               >
                 Sign Up
               </Link>
@@ -212,28 +256,23 @@ const Navbar = ({ isAuthenticated, user, logout }) => {
   );
 };
 
-// Helper component for navigation links
+// NavLink component
 const NavLink = ({ to, children, scrolled, isDashboardOrAuth }) => {
   const location = useLocation();
   const isActive = location.pathname === to;
   
   return (
     <Link 
-      to={to} 
-      className={`
-        relative px-2 py-1 transition-colors
-        ${scrolled || isDashboardOrAuth ? 'text-gray-800' : 'text-white'}
-        ${isActive ? 'font-medium' : 'hover:text-green-500'}
-      `}
+      to={to}
+      className={`px-3 py-2 rounded-full transition-colors ${
+        isActive 
+          ? 'bg-green-50 text-green-600' 
+          : scrolled || isDashboardOrAuth 
+            ? 'text-gray-700 hover:bg-gray-100' 
+            : 'text-white hover:bg-white/20'
+      }`}
     >
       {children}
-      {isActive && (
-        <motion.div 
-          className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-500"
-          layoutId="navIndicator"
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        />
-      )}
     </Link>
   );
 };

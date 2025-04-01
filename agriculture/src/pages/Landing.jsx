@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaLeaf, FaSeedling, FaCloudRain, FaRobot, FaChartLine, FaShieldAlt } from 'react-icons/fa';
+import { FaLeaf, FaSeedling, FaCloudRain, FaRobot, FaChartLine, FaShieldAlt, FaCloudSun, FaUsers, FaMobileAlt, FaDatabase } from 'react-icons/fa';
 import image from "../assets/image.png"
+
 const Landing = () => {
   return (
     <div className="flex flex-col min-h-screen">
@@ -129,6 +130,152 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* NEW: Farm Assistant Chatbot Section */}
+      <section className="py-20 bg-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-green-50 rounded-full -mr-48 -mt-48"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-50 rounded-full -ml-32 -mb-32"></div>
+        
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="p-1"
+            >
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6">Meet Your Virtual Farm Assistant</h2>
+              <p className="text-xl text-gray-600 mb-6">
+                Get instant answers to your farming questions through our AI-powered chatbot, available 24/7.
+              </p>
+              <ul className="space-y-4 mb-8">
+                <li className="flex items-start">
+                  <div className="flex-shrink-0 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white mt-1">✓</div>
+                  <p className="ml-3 text-gray-700">Immediate answers to crop management questions</p>
+                </li>
+                <li className="flex items-start">
+                  <div className="flex-shrink-0 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white mt-1">✓</div>
+                  <p className="ml-3 text-gray-700">Pest identification and treatment suggestions</p>
+                </li>
+                <li className="flex items-start">
+                  <div className="flex-shrink-0 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white mt-1">✓</div>
+                  <p className="ml-3 text-gray-700">Personalized advice based on your farm's conditions</p>
+                </li>
+              </ul>
+              <Link 
+                to="/register"
+                className="px-6 py-3 bg-green-600 hover:bg-green-700 rounded-lg font-medium text-white transition-all inline-flex items-center"
+              >
+                <FaRobot className="mr-2" /> Try the Farm Assistant
+              </Link>
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100"
+            >
+              <div className="bg-gray-100 rounded-t-xl p-4 flex items-center">
+                <FaRobot className="text-green-600 text-xl mr-2" />
+                <h3 className="font-semibold">Farm Assistant</h3>
+              </div>
+              <div className="py-6 px-4 space-y-4">
+                <div className="bg-green-50 p-3 rounded-lg rounded-tl-none max-w-[80%]">
+                  <p className="text-gray-800">Hello farmer! How can I help with your crops today?</p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-lg rounded-tr-none max-w-[80%] ml-auto text-right">
+                  <p className="text-gray-800">When should I water my tomato plants?</p>
+                </div>
+                <div className="bg-green-50 p-3 rounded-lg rounded-tl-none max-w-[80%]">
+                  <p className="text-gray-800">For tomatoes, water deeply 2-3 times a week. Check soil moisture by inserting your finger about 1 inch deep - if it's dry, it's time to water. In hot weather, you may need to water daily.</p>
+                </div>
+              </div>
+              <div className="border-t border-gray-200 p-4">
+                <div className="bg-gray-100 rounded-full flex items-center px-4 py-2">
+                  <input type="text" className="bg-transparent flex-grow outline-none text-gray-700 placeholder-gray-500" placeholder="Ask me anything about farming..." disabled />
+                  <FaMobileAlt className="text-green-500 ml-2" />
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Real-time Weather Integration */}
+      <section className="py-20 bg-gradient-to-b from-blue-50 to-green-50">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <div className="inline-block p-3 bg-blue-100 rounded-full text-blue-600 mb-4">
+              <FaCloudSun size={28} />
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Real-Time Weather Integration</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Make critical farming decisions with accurate, location-specific weather data
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="bg-white rounded-2xl shadow-xl p-6 border-t-4 border-blue-500"
+            >
+              <div className="flex items-center justify-center mb-4">
+                <div className="p-3 bg-blue-50 rounded-full">
+                  <FaCloudRain className="text-blue-600 text-2xl" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-center text-gray-800 mb-3">Precise Forecasts</h3>
+              <p className="text-gray-600 text-center">
+                Access 5-day weather forecasts specific to your farm's location to plan activities effectively.
+              </p>
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="bg-white rounded-2xl shadow-xl p-6 border-t-4 border-blue-500"
+            >
+              <div className="flex items-center justify-center mb-4">
+                <div className="p-3 bg-blue-50 rounded-full">
+                  <FaDatabase className="text-blue-600 text-2xl" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-center text-gray-800 mb-3">Smart Recommendations</h3>
+              <p className="text-gray-600 text-center">
+                Receive automated suggestions for irrigation, fertilization, and pest control based on weather conditions.
+              </p>
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="bg-white rounded-2xl shadow-xl p-6 border-t-4 border-blue-500"
+            >
+              <div className="flex items-center justify-center mb-4">
+                <div className="p-3 bg-blue-50 rounded-full">
+                  <FaChartLine className="text-blue-600 text-2xl" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-center text-gray-800 mb-3">Weather Analytics</h3>
+              <p className="text-gray-600 text-center">
+                Track how weather patterns affect your crop performance and optimize your farming strategy.
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* How It Works */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
@@ -155,7 +302,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Testimonials
       <section className="py-20 bg-gradient-to-b from-blue-50 to-green-50">
         <div className="container mx-auto px-4">
           <motion.div
@@ -176,7 +323,7 @@ const Landing = () => {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* CTA Section */}
       <section className="py-20 bg-green-700 text-white relative overflow-hidden">
@@ -307,14 +454,14 @@ const features = [
     description: "Get instant answers to your farming questions through our AI-powered chatbot assistant."
   },
   {
-    icon: <FaShieldAlt size={28} />,
-    title: "Crop Protection",
-    description: "Receive personalized recommendations for pest control and disease prevention strategies."
+    icon: <FaCloudSun size={28} />,
+    title: "Real-time Weather",
+    description: "Access accurate weather forecasts and receive automated recommendations based on changing conditions."
   },
   {
-    icon: <FaSeedling size={28} />,
-    title: "Sustainable Farming",
-    description: "Implement eco-friendly practices with guidance on reducing environmental impact while increasing productivity."
+    icon: <FaUsers size={28} />,
+    title: "Farmer Community",
+    description: "Connect with other farmers, share knowledge, and get advice from experts in our active community forum."
   }
 ];
 
@@ -335,22 +482,22 @@ const steps = [
 
 const testimonials = [
   {
-    name: "John Deere",
-    location: "Wheat Farmer, Kansas",
+    name: "Rajiv Sharma",
+    location: "Wheat Farmer, Punjab",
     avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-    quote: "The leaf analysis feature saved my wheat crop from a spreading disease. I identified it early and saved over 80% of my yield."
+    quote: "The real-time weather predictions helped me plan irrigation perfectly. The predictive analysis suggested optimal planting times that increased my yield by 24%."
   },
   {
-    name: "Maria Rodriguez",
-    location: "Orchard Owner, California",
+    name: "Maria Garcia",
+    location: "Vegetable Farmer, Mexico",
     avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-    quote: "Smart irrigation recommendations reduced our water usage by 40% while maintaining our apple orchard's productivity."
+    quote: "The Farm Assistant chatbot answers all my questions instantly. I've saved money on consultants and prevented crop diseases by getting immediate advice."
   },
   {
-    name: "Raj Patel",
-    location: "Rice Farmer, India",
+    name: "Chen Wei",
+    location: "Rice Farmer, China",
     avatar: "https://randomuser.me/api/portraits/men/67.jpg",
-    quote: "The predictive analytics helped me time my harvest perfectly and get the best market prices for my rice crop."
+    quote: "The community feature connected me with other rice farmers facing similar challenges. We shared solutions that helped us all improve our farming methods."
   }
 ];
 

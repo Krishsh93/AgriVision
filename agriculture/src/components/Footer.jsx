@@ -41,7 +41,7 @@ const Footer = () => {
 
       <div className="container mx-auto px-4">
         <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -77,10 +77,22 @@ const Footer = () => {
             <h3 className="text-lg font-semibold mb-4 border-b border-green-700 pb-2">Quick Links</h3>
             <ul className="space-y-2">
               <li><Link to="/" className="text-green-200 hover:text-white transition-colors">Home</Link></li>
+              <li><Link to="/dashboard" className="text-green-200 hover:text-white transition-colors">Dashboard</Link></li>
               <li><Link to="/leaf-analysis" className="text-green-200 hover:text-white transition-colors">Leaf Analysis</Link></li>
               <li><Link to="/smart-irrigation" className="text-green-200 hover:text-white transition-colors">Smart Irrigation</Link></li>
-              <li><Link to="/predictive-analysis" className="text-green-200 hover:text-white transition-colors">Predictive Analysis</Link></li>
+              <li><Link to="/weather-scheduling" className="text-green-200 hover:text-white transition-colors">Weather Forecasting</Link></li>
+            </ul>
+          </motion.div>
+
+          {/* Features */}
+          <motion.div variants={itemVariants}>
+            <h3 className="text-lg font-semibold mb-4 border-b border-green-700 pb-2">Features</h3>
+            <ul className="space-y-2">
+              <li><Link to="/predictive-analysis" className="text-green-200 hover:text-white transition-colors">Yield Prediction</Link></li>
               <li><Link to="/chatbot" className="text-green-200 hover:text-white transition-colors">Farm Assistant</Link></li>
+              <li><Link to="/community" className="text-green-200 hover:text-white transition-colors">Community Forum</Link></li>
+              <li><a href="#" className="text-green-200 hover:text-white transition-colors">Knowledge Base</a></li>
+              <li><a href="#" className="text-green-200 hover:text-white transition-colors">Market Insights</a></li>
             </ul>
           </motion.div>
 
@@ -91,7 +103,7 @@ const Footer = () => {
               <li><a href="#" className="text-green-200 hover:text-white transition-colors">Blog</a></li>
               <li><a href="#" className="text-green-200 hover:text-white transition-colors">Farming Guide</a></li>
               <li><a href="#" className="text-green-200 hover:text-white transition-colors">Research Papers</a></li>
-              <li><a href="#" className="text-green-200 hover:text-white transition-colors">Community Forum</a></li>
+              <li><a href="#" className="text-green-200 hover:text-white transition-colors">Weather Maps</a></li>
               <li><a href="#" className="text-green-200 hover:text-white transition-colors">FAQ</a></li>
             </ul>
           </motion.div>

@@ -17,6 +17,23 @@ const analysisSchema = new mongoose.Schema({
   },
 });
 
+const yieldPredictionSchema = new mongoose.Schema({
+  crop: {
+    type: String,
+    required: true,
+  },
+  predictedYield: {
+    type: Number,
+    required: true,
+  },
+  date: {
+    type: Date,
+    default: Date.now,
+  },
+  fieldSize: Number,
+  unit: String,
+});
+
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -57,6 +74,7 @@ const userSchema = new mongoose.Schema(
       default: true,
     },
     analysis: [analysisSchema],
+    yieldPredictions: [yieldPredictionSchema],
   },
   {
     timestamps: true,

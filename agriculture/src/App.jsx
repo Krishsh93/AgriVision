@@ -15,6 +15,8 @@ import SmartIrrigation from './pages/SmartIrrigation'
 import PredictiveAnalysis from './pages/PredictiveAnalysis'
 import Chatbot from './pages/Chatbot'
 import NotFound from './pages/NotFound'
+import WeatherScheduling from './pages/WeatherScheduling'
+import Community from './pages/Community'
 
 // Import components
 import Navbar from './components/Navbar'
@@ -106,6 +108,16 @@ function App() {
             <Route path="/chatbot" element={
               <PrivateRoute isAuthenticated={isAuthenticated}>
                 <Chatbot user={user} />
+              </PrivateRoute>
+            } />
+            <Route path="/weather-scheduling" element={
+              <PrivateRoute isAuthenticated={isAuthenticated}>
+                <WeatherScheduling user={user} />
+              </PrivateRoute>
+            } />
+            <Route path="/community" element={
+              <PrivateRoute isAuthenticated={isAuthenticated}>
+                <Community user={user} />
               </PrivateRoute>
             } />
             

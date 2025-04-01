@@ -14,6 +14,7 @@ const leafAnalysisRoutes = require('./routes/leafAnalysis.routes');
 const irrigationRoutes = require('./routes/irrigation.routes');
 const predictiveAnalysisRoutes = require('./routes/predictiveAnalysis.routes');
 const chatbotRoutes = require('./routes/chatbot.routes');
+const communityRoutes = require('./routes/community/community.routes');
 
 // Import database connection
 const connectDB = require('./config/db');
@@ -41,6 +42,7 @@ app.use('/api/leaf-analysis', leafAnalysisRoutes);
 app.use('/api/irrigation', irrigationRoutes);
 app.use('/api/predictive-analysis', predictiveAnalysisRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/community', communityRoutes);
 
 // Base route
 app.get('/', (req, res) => {

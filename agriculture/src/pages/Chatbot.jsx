@@ -1,7 +1,56 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FaRobot } from 'react-icons/fa';
+import { FaRobot, FaUser, FaPaperPlane, FaSeedling, FaLeaf, FaCloudRain, FaBug, FaTractor, FaSun, FaWater } from 'react-icons/fa';
 
-const Chatbot = () => {
+const Chatbot = ({ user }) => {
+  const [message, setMessage] = useState('');
+  const [chatHistory, setChatHistory] = useState([
+    {
+      sender: 'bot',
+      text: 'Hello! I\'m your AgriAssistant. I can help with crop management, pest control, irrigation advice, and more. What farming questions do you have today?',
+      timestamp: new Date()
+    }
+  ]);
+
+  // Sample suggested questions
+  const suggestedQuestions = [
+    "How often should I water tomato plants?",
+    "What are natural ways to control aphids?",
+    "Best fertilizer for corn crops?",
+    "How to improve soil fertility naturally?",
+    "When is the best time to plant wheat?",
+    "Signs of nitrogen deficiency in plants?"
+  ];
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!message.trim()) return;
+
+    // Add user message to chat
+    const userMessage = {
+      sender: 'user',
+      text: message,
+      timestamp: new Date()
+    };
+    
+    setChatHistory([...chatHistory, userMessage]);
+    setMessage('');
+    
+    // For now, just simulate a bot response without actual backend call
+    setTimeout(() => {
+      const botMessage = {
+        sender: 'bot',
+        text: "I'm still being trained on agricultural data. This feature will be fully functional soon!",
+        timestamp: new Date()
+      };
+      setChatHistory(prev => [...prev, botMessage]);
+    }, 1000);
+  };
+
+  const selectSuggestedQuestion = (question) => {
+    setMessage(question);
+  };
+
   return (
     <div className="min-h-screen pt-20 pb-10 bg-gradient-to-b from-green-50 to-blue-50">
       <div className="container mx-auto px-4">
@@ -9,10 +58,10 @@ const Chatbot = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-8"
+          className="mb-6"
         >
           <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2 flex items-center">
-            <FaRobot className="text-amber-600 mr-3" />
+            <FaRobot className="text-emerald-600 mr-3" />
             Farm Assistant
           </h1>
           <p className="text-gray-600 max-w-3xl">
@@ -20,20 +69,153 @@ const Chatbot = () => {
           </p>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="bg-white rounded-2xl shadow-lg overflow-hidden max-w-4xl mx-auto p-8 text-center"
-        >
-          <div className="w-24 h-24 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 mx-auto mb-6">
-            <FaRobot size={40} />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Coming Soon</h2>
-          <p className="text-gray-600 max-w-lg mx-auto">
-            Our Farm Assistant chatbot is being trained on the latest agricultural knowledge and best practices. Check back soon to get expert guidance at your fingertips!
-          </p>
-        </motion.div>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Main Chat Interface */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="bg-white rounded-2xl shadow-lg overflow-hidden lg:col-span-3"
+          >
+            {/* Chat Header */}
+            <div className="bg-emerald-600 text-white p-4 flex items-center">
+              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-emerald-600 mr-3">
+                <FaRobot size={20} />
+              </div>
+              <div>
+                <h2 className="font-bold">AgriAssistant</h2>
+                <p className="text-xs text-emerald-100">Your smart farming companion</p>
+              </div>
+              <div className="ml-auto flex space-x-2">
+                <span className="inline-block px-2 py-1 bg-emerald-700 rounded-full text-xs">Beta</span>
+              </div>
+            </div>
+            
+            {/* Chat Messages */}
+            <div className="p-4 h-[60vh] overflow-y-auto flex flex-col space-y-4" id="chat-messages">
+              {chatHistory.map((chat, index) => (
+                <div 
+                  key={index} 
+                  className={`flex ${chat.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div 
+                    className={`max-w-[80%] p-3 rounded-lg ${
+                      chat.sender === 'user' 
+                        ? 'bg-emerald-100 text-gray-800 rounded-br-none' 
+                        : 'bg-gray-100 text-gray-800 rounded-bl-none'
+                    }`}
+                  >
+                    <div className="flex items-start mb-1">
+                      {chat.sender === 'bot' && (
+                        <div className="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center text-white mr-2">
+                          <FaRobot size={12} />
+                        </div>
+                      )}
+                      {chat.sender === 'user' && (
+                        <div className="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center text-white ml-2 order-2">
+                          <FaUser size={12} />
+                        </div>
+                      )}
+                      <p className={chat.sender === 'user' ? 'order-1 mr-2' : ''}>{chat.text}</p>
+                    </div>
+                    <p className={`text-xs text-gray-500 ${chat.sender === 'user' ? 'text-right' : 'text-left'}`}>
+                      {chat.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Chat Input */}
+            <div className="border-t border-gray-200 p-4">
+              <form onSubmit={handleSubmit} className="flex items-center">
+                <input
+                  type="text"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Ask me anything about farming..."
+                  className="flex-grow p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                />
+                <button 
+                  type="submit"
+                  className="bg-emerald-600 text-white p-3 rounded-r-lg hover:bg-emerald-700 transition"
+                >
+                  <FaPaperPlane />
+                </button>
+              </form>
+              <p className="text-xs text-gray-500 mt-2">
+                *This is a demonstration interface. The AI assistant is not fully functional yet.
+              </p>
+            </div>
+          </motion.div>
+
+          {/* Sidebar */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="bg-white rounded-2xl shadow-lg overflow-hidden"
+          >
+            {/* Suggested Questions */}
+            <div className="p-4 border-b border-gray-200">
+              <h3 className="font-semibold text-gray-800 mb-3">Suggested Questions</h3>
+              <div className="space-y-2">
+                {suggestedQuestions.map((question, index) => (
+                  <button
+                    key={index}
+                    onClick={() => selectSuggestedQuestion(question)}
+                    className="w-full text-left p-2 text-sm bg-gray-50 hover:bg-emerald-50 rounded-lg transition"
+                  >
+                    {question}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Categories */}
+            <div className="p-4">
+              <h3 className="font-semibold text-gray-800 mb-3">Categories</h3>
+              <ul className="space-y-2">
+                <li>
+                  <button className="w-full flex items-center p-2 text-sm text-left bg-gray-50 hover:bg-emerald-50 rounded-lg transition">
+                    <FaSeedling className="text-emerald-600 mr-2" /> 
+                    <span>Crop Management</span>
+                  </button>
+                </li>
+                <li>
+                  <button className="w-full flex items-center p-2 text-sm text-left bg-gray-50 hover:bg-emerald-50 rounded-lg transition">
+                    <FaBug className="text-emerald-600 mr-2" /> 
+                    <span>Pest Control</span>
+                  </button>
+                </li>
+                <li>
+                  <button className="w-full flex items-center p-2 text-sm text-left bg-gray-50 hover:bg-emerald-50 rounded-lg transition">
+                    <FaWater className="text-emerald-600 mr-2" /> 
+                    <span>Irrigation</span>
+                  </button>
+                </li>
+                <li>
+                  <button className="w-full flex items-center p-2 text-sm text-left bg-gray-50 hover:bg-emerald-50 rounded-lg transition">
+                    <FaLeaf className="text-emerald-600 mr-2" /> 
+                    <span>Plant Health</span>
+                  </button>
+                </li>
+                <li>
+                  <button className="w-full flex items-center p-2 text-sm text-left bg-gray-50 hover:bg-emerald-50 rounded-lg transition">
+                    <FaTractor className="text-emerald-600 mr-2" /> 
+                    <span>Farm Equipment</span>
+                  </button>
+                </li>
+                <li>
+                  <button className="w-full flex items-center p-2 text-sm text-left bg-gray-50 hover:bg-emerald-50 rounded-lg transition">
+                    <FaSun className="text-emerald-600 mr-2" /> 
+                    <span>Weather Impact</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </motion.div>
+        </div>
       </div>
     </div>
   );
