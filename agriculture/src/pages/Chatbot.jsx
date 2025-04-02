@@ -7,6 +7,7 @@ const Chatbot = ({ user }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
   const [chatHistory, setChatHistory] = useState([
     {
       sender: 'bot',
@@ -15,10 +16,35 @@ const Chatbot = ({ user }) => {
     }
   ]);
 
-  // Auto-scroll to the bottom of the chat when messages change
+  // Enhanced auto-scroll logic that works during streaming
+  const scrollToBottom = () => {
+    if (chatContainerRef.current) {
+      const { scrollHeight, clientHeight } = chatContainerRef.current;
+      chatContainerRef.current.scrollTo({
+        top: scrollHeight - clientHeight,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // Scroll on chat history update
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    scrollToBottom();
   }, [chatHistory]);
+  
+  // Set up an interval to check for scroll during streaming responses
+  useEffect(() => {
+    let scrollInterval;
+    
+    if (isLoading) {
+      // During loading/streaming, check scroll position more frequently
+      scrollInterval = setInterval(scrollToBottom, 300);
+    }
+    
+    return () => {
+      if (scrollInterval) clearInterval(scrollInterval);
+    };
+  }, [isLoading]);
 
   // Sample suggested questions
   const suggestedQuestions = [
@@ -84,7 +110,7 @@ const Chatbot = ({ user }) => {
   };
 
   const generateResponse = async (userMessage) => {
-    setError(null); // Reset error state
+    setError(null);
     try {
       console.log("Sending request to Ollama API...");
       const API_URL = 'http://localhost:11434/api/generate';
@@ -97,6 +123,8 @@ const Chatbot = ({ user }) => {
       };
       
       setChatHistory(prev => [...prev, botMessage]);
+      // Force an immediate scroll after adding the bot message placeholder
+      setTimeout(scrollToBottom, 50);
       
       const response = await fetch(API_URL, {
         method: 'POST',
@@ -104,9 +132,16 @@ const Chatbot = ({ user }) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: "gemma3:4b", // Using your available model
-          prompt: `You are an agricultural assistant focused on providing detailed farming advice. 
-                  Answer the following farming question in a helpful, accurate way in very short way: ${userMessage}`,
+          model: "gemma3:4b",
+          prompt: `You are an agricultural assistant named AgriAssistant, specializing in farming advice.
+
+Instructions:
+1. If the user's question is in Hinglish (Hindi-English mix), respond in Hindi
+2. If the user's question is in English, respond in English
+3. Keep answers concise, practical and farmer-friendly
+4. Include specific actionable advice when possible
+
+User's farming question:${userMessage}`,
           stream: true
         })
       });
@@ -147,6 +182,9 @@ const Chatbot = ({ user }) => {
                   };
                   return newHistory;
                 });
+                
+                // Trigger a scroll update immediately after updating the message
+                setTimeout(scrollToBottom, 10);
               }
             } catch (e) {
               console.warn('Error parsing JSON line:', e, line);
@@ -158,6 +196,8 @@ const Chatbot = ({ user }) => {
         throw streamError;
       }
       
+      // One final scroll to make sure we're at the bottom
+      setTimeout(scrollToBottom, 100);
       return fullText;
       
     } catch (error) {
@@ -253,7 +293,11 @@ const Chatbot = ({ user }) => {
             </div>
             
             {/* Chat Messages */}
-            <div className="p-4 h-[60vh] overflow-y-auto flex flex-col space-y-4" id="chat-messages">
+            <div 
+              ref={chatContainerRef}
+              className="p-4 h-[60vh] overflow-y-auto flex flex-col space-y-4" 
+              id="chat-messages"
+            >
               {chatHistory.map((chat, index) => (
                 <div 
                   key={index} 
@@ -303,7 +347,7 @@ const Chatbot = ({ user }) => {
                   </div>
                 </div>
               )}
-              <div ref={messagesEndRef} />
+              <div ref={messagesEndRef} className="h-[1px]" /> {/* Enhanced invisible element */}
             </div>
             
             {/* Chat Input */}
