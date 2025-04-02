@@ -132,7 +132,7 @@ const Dashboard = ({ user }) => {
           feelsLike: current.feelslike_c,
           icon: current.condition.icon,
           lastUpdated: current.last_updated,
-          locationName: `${locationData.name}, ${locationData.country}`
+          locationName: `${locationData.region}, ${locationData.country}`
         });
       }
       
