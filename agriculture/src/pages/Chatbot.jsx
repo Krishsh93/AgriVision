@@ -34,7 +34,7 @@ const Chatbot = ({ user }) => {
     // Check if the message contains numbered steps or bullet points
     if (text.includes('*') || text.match(/^\d+\./m)) {
       return (
-        <div className="space-y-3">
+        <div className="space-y-3 text-left">
           {text.split('\n').map((line, index) => {
             // Handle numbered steps
             if (line.match(/^\d+\./)) {
@@ -51,26 +51,28 @@ const Chatbot = ({ user }) => {
             }
             // Handle bullet points
             else if (line.startsWith('*')) {
+              const cleanText = line.replace(/^\*\s*/, '');
+              if (cleanText.startsWith('Resources:')) {
+                return (
+                  <div key={index} className="mt-4 p-3 bg-blue-50 border-l-4 border-blue-400">
+                    <p className="text-blue-800 font-medium">{cleanText}</p>
+                  </div>
+                );
+              }
               return (
                 <div key={index} className="flex items-start space-x-3">
                   <div className="flex-shrink-0 w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
                     •
                   </div>
                   <div className="flex-grow">
-                    <p className="text-gray-800">{line.replace(/^\*\s*/, '')}</p>
+                    <p className="text-gray-800">{cleanText}</p>
                   </div>
                 </div>
               );
             }
-            // Handle important notes
-            else if (line.startsWith('*Important:*')) {
-              return (
-                <div key={index} className="mt-4 p-3 bg-yellow-50 border-l-4 border-yellow-400">
-                  <p className="text-yellow-800 font-medium">
-                    {line.replace('*Important:*', '')}
-                  </p>
-                </div>
-              );
+            // Handle empty lines
+            else if (!line.trim()) {
+              return <div key={index} className="h-2" />;
             }
             // Regular text
             return <p key={index} className="text-gray-800">{line}</p>;
@@ -78,7 +80,7 @@ const Chatbot = ({ user }) => {
         </div>
       );
     }
-    return <p className="text-gray-800">{text}</p>;
+    return <p className="text-gray-800 text-left">{text}</p>;
   };
 
   const generateResponse = async (userMessage) => {
