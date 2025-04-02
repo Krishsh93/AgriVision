@@ -4,6 +4,7 @@ import { FaRobot, FaUser, FaPaperPlane, FaSeedling, FaLeaf, FaCloudRain, FaBug, 
 
 const Chatbot = ({ user }) => {
   const [message, setMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [chatHistory, setChatHistory] = useState([
     {
       sender: 'bot',
@@ -22,7 +23,40 @@ const Chatbot = ({ user }) => {
     "Signs of nitrogen deficiency in plants?"
   ];
 
-  const handleSubmit = (e) => {
+  const generateResponse = async (userMessage) => {
+    try {
+      // Replace this URL with your actual chatbot model API endpoint
+      const API_URL = 'YOUR_CHATBOT_MODEL_API_ENDPOINT';
+      
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Add any additional headers your API requires (e.g., API key)
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          // Add any additional parameters your API expects
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('API request failed');
+      }
+
+      const data = await response.json();
+      
+      // Adjust this based on your API response structure
+      // This assumes your API returns a response in the format { response: "..." }
+      return data.response || "I apologize, but I couldn't process your request properly.";
+      
+    } catch (error) {
+      console.error('Error calling chatbot API:', error);
+      return "I apologize, but I'm having trouble accessing the chatbot service right now. Please try again in a moment.";
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!message.trim()) return;
 
@@ -33,18 +67,21 @@ const Chatbot = ({ user }) => {
       timestamp: new Date()
     };
     
-    setChatHistory([...chatHistory, userMessage]);
+    setChatHistory(prev => [...prev, userMessage]);
     setMessage('');
+    setIsLoading(true);
     
-    // For now, just simulate a bot response without actual backend call
-    setTimeout(() => {
-      const botMessage = {
-        sender: 'bot',
-        text: "I'm still being trained on agricultural data. This feature will be fully functional soon!",
-        timestamp: new Date()
-      };
-      setChatHistory(prev => [...prev, botMessage]);
-    }, 1000);
+    // Get bot response
+    const response = await generateResponse(message);
+    
+    const botMessage = {
+      sender: 'bot',
+      text: response,
+      timestamp: new Date()
+    };
+    
+    setChatHistory(prev => [...prev, botMessage]);
+    setIsLoading(false);
   };
 
   const selectSuggestedQuestion = (question) => {
@@ -124,6 +161,22 @@ const Chatbot = ({ user }) => {
                   </div>
                 </div>
               ))}
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-gray-100 text-gray-800 rounded-lg rounded-bl-none p-3">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center text-white">
+                        <FaRobot size={12} />
+                      </div>
+                      <div className="flex space-x-2">
+                        <div className="w-2 h-2 bg-emerald-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-2 h-2 bg-emerald-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-2 h-2 bg-emerald-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             
             {/* Chat Input */}

@@ -18,7 +18,7 @@ import soyabeanImage from '../assets/soyabean.jpg';
 const WeatherScheduling = ({ user }) => {
   const [currentWeather, setCurrentWeather] = useState(null);
   const [forecast, setForecast] = useState([]);
-  const [location, setLocation] = useState('New York');
+  const [location, setLocation] = useState('New Delhi');
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState([]);
   const [showAddTask, setShowAddTask] = useState(false);
@@ -96,6 +96,8 @@ const WeatherScheduling = ({ user }) => {
         const current = currentResponse.data.current;
         const locationData = currentResponse.data.location;
         
+        console.log('Location Data:', locationData);
+        
         setCurrentWeather({
           temperature: current.temp_c,
           condition: current.condition.text,
@@ -107,7 +109,7 @@ const WeatherScheduling = ({ user }) => {
           feelsLike: current.feelslike_c,
           icon: current.condition.icon,
           lastUpdated: current.last_updated,
-          locationName: `${locationData.name}, ${locationData.country}`
+          locationName: `${locationData.region}, ${locationData.country}`
         });
         
         // Process forecast data
