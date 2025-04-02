@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaLeaf, FaUser, FaBars, FaTimes, FaSignOutAlt, FaCloudSun, FaUsers, FaMicroscope, FaWater, FaChartLine, FaRobot } from 'react-icons/fa';
+import { FaLeaf, FaUser, FaBars, FaTimes, FaSignOutAlt, FaCloudSun, FaUsers, FaMicroscope, FaWater, FaChartLine, FaRobot, FaHome } from 'react-icons/fa';
 
 const Navbar = ({ isAuthenticated, user, logout }) => {
   const [isOpen, setIsOpen] = useState(false);

@@ -40,7 +40,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Constants
-LEAF_DISEASE_MODEL_PATH = 'models/leaf_disease_model.h5'
+LEAF_DISEASE_MODEL_PATH = 'models/model(1).h5'  # Updated path to your new model
 IRRIGATION_MODEL_PATH = 'models/irrigation_model.h5'
 SUPPLY_CHAIN_MODEL_PATH = 'models/supply_chain_model.pkl'
 FERTILIZATION_MODEL_PATH = 'models/fertilization_model.h5'
@@ -135,11 +135,67 @@ def load_models():
     
     if TENSORFLOW_AVAILABLE:
         try:
+            print(f"Attempting to load leaf disease model from: {LEAF_DISEASE_MODEL_PATH}")
+            print(f"Current working directory: {os.getcwd()}")
+            print(f"Directory contents: {os.listdir('models')}")
+            print(f"TensorFlow version: {tf.__version__}")
+            
             if os.path.exists(LEAF_DISEASE_MODEL_PATH):
-                leaf_disease_model = load_model(LEAF_DISEASE_MODEL_PATH)
-                print("Leaf disease model loaded successfully")
+                try:
+                    # First attempt: Load with default settings
+                    leaf_disease_model = load_model(LEAF_DISEASE_MODEL_PATH, compile=False)
+                    print("Leaf disease model loaded successfully")
+                except Exception as e:
+                    print(f"Error during first model loading attempt: {str(e)}")
+                    print("Attempting to load with custom_objects...")
+                    try:
+                        # Second attempt: Load with custom objects and safe_mode
+                        leaf_disease_model = load_model(
+                            LEAF_DISEASE_MODEL_PATH,
+                            custom_objects={
+                                'custom_activation': tf.nn.relu,
+                                'relu': tf.nn.relu,
+                                'ReLU': tf.keras.layers.ReLU
+                            },
+                            compile=False,
+                            safe_mode=True
+                        )
+                        print("Leaf disease model loaded successfully with custom_objects")
+                    except Exception as e2:
+                        print(f"Error during second model loading attempt: {str(e2)}")
+                        print("Attempting to load with legacy format...")
+                        try:
+                            # Third attempt: Load with legacy format
+                            leaf_disease_model = tf.keras.models.load_model(
+                                LEAF_DISEASE_MODEL_PATH,
+                                compile=False,
+                                custom_objects={
+                                    'custom_activation': tf.nn.relu,
+                                    'relu': tf.nn.relu,
+                                    'ReLU': tf.keras.layers.ReLU
+                                }
+                            )
+                            print("Leaf disease model loaded successfully with legacy format")
+                        except Exception as e3:
+                            print(f"Error during third model loading attempt: {str(e3)}")
+                            print("Model loading failed after all attempts")
+                            print(f"Model file size: {os.path.getsize(LEAF_DISEASE_MODEL_PATH)} bytes")
+                            print(f"Model file path: {os.path.abspath(LEAF_DISEASE_MODEL_PATH)}")
+                            # Create a simple mock model for fallback
+                            leaf_disease_model = create_mock_model()
+                            print("Created mock model for fallback")
+            else:
+                print(f"Error: Model file not found at {LEAF_DISEASE_MODEL_PATH}")
+                # Create a simple mock model for fallback
+                leaf_disease_model = create_mock_model()
+                print("Created mock model for fallback")
         except Exception as e:
-            print(f"Error loading leaf disease model: {e}")
+            print(f"Error loading leaf disease model: {str(e)}")
+            print(f"TensorFlow version: {tf.__version__}")
+            print(f"Model file size: {os.path.getsize(LEAF_DISEASE_MODEL_PATH) if os.path.exists(LEAF_DISEASE_MODEL_PATH) else 'File not found'}")
+            # Create a simple mock model for fallback
+            leaf_disease_model = create_mock_model()
+            print("Created mock model for fallback")
         
         try:
             if os.path.exists(IRRIGATION_MODEL_PATH):
@@ -174,6 +230,26 @@ def load_models():
     if not TENSORFLOW_AVAILABLE:
         create_standalone_models()
 
+def create_mock_model():
+    """Create a simple mock model for fallback"""
+    try:
+        model = tf.keras.Sequential([
+            tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(224, 224, 3)),
+            tf.keras.layers.MaxPooling2D((2, 2)),
+            tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
+            tf.keras.layers.MaxPooling2D((2, 2)),
+            tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
+            tf.keras.layers.Flatten(),
+            tf.keras.layers.Dense(64, activation='relu'),
+            tf.keras.layers.Dense(len(LEAF_DISEASE_CLASSES), activation='softmax')
+        ])
+        model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+        print("Mock model created successfully")
+        return model
+    except Exception as e:
+        print(f"Error creating mock model: {str(e)}")
+        return None
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
@@ -200,19 +276,16 @@ def predict_leaf_disease():
         return jsonify({'error': 'No image provided'}), 400
     
     if not TENSORFLOW_AVAILABLE:
-        # Return mock prediction if TensorFlow is not available
-        disease_class = random.choice(LEAF_DISEASE_CLASSES)
-        disease_info = get_disease_info(disease_class)
-        return jsonify({
-            'note': 'Using mock prediction (TensorFlow not available)',
-            'disease': disease_class,
-            'confidence': random.uniform(0.7, 0.95),
-            'information': disease_info,
-            'recommendations': disease_info.get('treatment', 'No specific treatment available')
-        })
+        return jsonify({'error': 'TensorFlow is not available'}), 503
     
     if leaf_disease_model is None:
-        return jsonify({'error': 'Model not loaded'}), 503
+        print("Leaf disease model is not loaded. Current state:")
+        print(f"TensorFlow available: {TENSORFLOW_AVAILABLE}")
+        print(f"Model path exists: {os.path.exists(LEAF_DISEASE_MODEL_PATH)}")
+        print(f"Current working directory: {os.getcwd()}")
+        print(f"Directory contents: {os.listdir('models')}")
+        print(f"TensorFlow version: {tf.__version__}")
+        return jsonify({'error': 'Model not loaded. Please check server logs for details.'}), 503
     
     file = request.files['image']
     filename = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
@@ -220,13 +293,16 @@ def predict_leaf_disease():
     
     try:
         # Preprocess the image
-        img = image.load_img(filename, target_size=(224, 224))
-        img_array = image.img_to_array(img)
-        img_array = np.expand_dims(img_array, axis=0)
-        img_array = img_array / 255.0  # Normalize
+        img = cv2.imread(filename)
+        if img is None:
+            return jsonify({'error': 'Failed to read image'}), 400
+            
+        img = cv2.resize(img, (224, 224))  # Resize to match model input size
+        img = img / 255.0  # Normalize
+        img = np.expand_dims(img, axis=0)
         
         # Make prediction
-        predictions = leaf_disease_model.predict(img_array)
+        predictions = leaf_disease_model.predict(img)
         predicted_class_idx = np.argmax(predictions[0])
         predicted_class = LEAF_DISEASE_CLASSES[predicted_class_idx]
         confidence = float(predictions[0][predicted_class_idx])
@@ -234,14 +310,19 @@ def predict_leaf_disease():
         # Get additional info based on the disease
         disease_info = get_disease_info(predicted_class)
         
+        # Check if we're using the mock model
+        is_mock = isinstance(leaf_disease_model, tf.keras.Sequential) and len(leaf_disease_model.layers) == 8
+        
         return jsonify({
             'disease': predicted_class,
             'confidence': confidence,
             'information': disease_info,
-            'recommendations': disease_info.get('treatment', 'No specific treatment available')
+            'recommendations': disease_info.get('treatment', 'No specific treatment available'),
+            'note': 'Using mock model for demonstration' if is_mock else None
         })
     
     except Exception as e:
+        print(f"Error during prediction: {str(e)}")
         return jsonify({'error': str(e)}), 500
     finally:
         # Clean up uploaded file

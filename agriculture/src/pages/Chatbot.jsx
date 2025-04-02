@@ -220,7 +220,7 @@ User's farming question:${userMessage}`,
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!message.trim()) return;
-  
+
     // Add user message to chat
     const userMessage = {
       sender: 'user',
@@ -242,7 +242,7 @@ User's farming question:${userMessage}`,
       setIsLoading(false);
     }
   };
-  
+
   const selectSuggestedQuestion = (question) => {
     setMessage(question);
   };
@@ -446,4 +446,4 @@ User's farming question:${userMessage}`,
   );
 };
 
-export default Chatbot;
+export default Chatbot; 
