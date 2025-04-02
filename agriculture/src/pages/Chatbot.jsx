@@ -53,7 +53,7 @@ const Chatbot = ({ user }) => {
         body: JSON.stringify({
           model: "gemma3:4b", // Using your available model
           prompt: `You are an agricultural assistant focused on providing detailed farming advice. 
-                  Answer the following farming question in a helpful, accurate way: ${userMessage}`,
+                  Answer the following farming question in a helpful, accurate way in very short way: ${userMessage}`,
           stream: true
         })
       });
