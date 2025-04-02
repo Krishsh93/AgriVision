@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { FaRobot, FaUser, FaPaperPlane, FaSeedling, FaLeaf, FaCloudRain, FaBug, FaTractor, FaSun, FaWater } from 'react-icons/fa';
 
 const Chatbot = ({ user }) => {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const messagesEndRef = useRef(null);
   const [chatHistory, setChatHistory] = useState([
     {
       sender: 'bot',
@@ -12,6 +14,11 @@ const Chatbot = ({ user }) => {
       timestamp: new Date()
     }
   ]);
+
+  // Auto-scroll to the bottom of the chat when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatHistory]);
 
   // Sample suggested questions
   const suggestedQuestions = [
@@ -24,42 +31,103 @@ const Chatbot = ({ user }) => {
   ];
 
   const generateResponse = async (userMessage) => {
+    setError(null); // Reset error state
     try {
-      // Replace this URL with your actual chatbot model API endpoint
-      const API_URL = 'YOUR_CHATBOT_MODEL_API_ENDPOINT';
+      console.log("Sending request to Ollama API...");
+      const API_URL = 'http://localhost:11434/api/generate';
+      
+      // Create a placeholder for the streaming response
+      const botMessage = {
+        sender: 'bot',
+        text: '',
+        timestamp: new Date()
+      };
+      
+      setChatHistory(prev => [...prev, botMessage]);
       
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // Add any additional headers your API requires (e.g., API key)
         },
         body: JSON.stringify({
-          message: userMessage,
-          // Add any additional parameters your API expects
+          model: "gemma3:4b", // Using your available model
+          prompt: `You are an agricultural assistant focused on providing detailed farming advice. 
+                  Answer the following farming question in a helpful, accurate way: ${userMessage}`,
+          stream: true
         })
       });
-
-      if (!response.ok) {
-        throw new Error('API request failed');
-      }
-
-      const data = await response.json();
       
-      // Adjust this based on your API response structure
-      // This assumes your API returns a response in the format { response: "..." }
-      return data.response || "I apologize, but I couldn't process your request properly.";
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`API error: ${response.status}`, errorText);
+        throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+      }
+      
+      // Process the streaming response
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let fullText = '';
+      
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          const chunk = decoder.decode(value, { stream: true });
+          
+          // Split the chunk by newlines and parse each line as JSON
+          const lines = chunk.split('\n').filter(line => line.trim() !== '');
+          
+          for (const line of lines) {
+            try {
+              const data = JSON.parse(line);
+              if (data.response) {
+                fullText += data.response;
+                
+                // Update the bot message in real-time
+                setChatHistory(prev => {
+                  const newHistory = [...prev];
+                  newHistory[newHistory.length - 1] = {
+                    ...newHistory[newHistory.length - 1],
+                    text: fullText
+                  };
+                  return newHistory;
+                });
+              }
+            } catch (e) {
+              console.warn('Error parsing JSON line:', e, line);
+            }
+          }
+        }
+      } catch (streamError) {
+        console.error('Error reading stream:', streamError);
+        throw streamError;
+      }
+      
+      return fullText;
       
     } catch (error) {
       console.error('Error calling chatbot API:', error);
-      return "I apologize, but I'm having trouble accessing the chatbot service right now. Please try again in a moment.";
+      setError(error.message);
+      
+      // Update the bot message with an error text
+      setChatHistory(prev => {
+        const newHistory = [...prev];
+        if (newHistory[newHistory.length - 1].sender === 'bot' && newHistory[newHistory.length - 1].text === '') {
+          newHistory[newHistory.length - 1].text = "I apologize, but I'm having trouble accessing my knowledge base right now. Please try again in a moment.";
+        }
+        return newHistory;
+      });
+      
+      return "I apologize, but I'm having trouble accessing my knowledge base right now. Please try again in a moment.";
     }
   };
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!message.trim()) return;
-
+  
     // Add user message to chat
     const userMessage = {
       sender: 'user',
@@ -71,19 +139,17 @@ const Chatbot = ({ user }) => {
     setMessage('');
     setIsLoading(true);
     
-    // Get bot response
-    const response = await generateResponse(message);
-    
-    const botMessage = {
-      sender: 'bot',
-      text: response,
-      timestamp: new Date()
-    };
-    
-    setChatHistory(prev => [...prev, botMessage]);
-    setIsLoading(false);
+    try {
+      // Get the response from the API - the function now handles adding the bot's message
+      await generateResponse(message);
+    } catch (err) {
+      console.error("Error in handleSubmit:", err);
+      // Skip adding error message here as it's already handled in generateResponse
+    } finally {
+      setIsLoading(false);
+    }
   };
-
+  
   const selectSuggestedQuestion = (question) => {
     setMessage(question);
   };
@@ -104,6 +170,11 @@ const Chatbot = ({ user }) => {
           <p className="text-gray-600 max-w-3xl">
             Get instant answers to your farming questions through our AI-powered assistant.
           </p>
+          {error && (
+            <div className="mt-2 p-2 bg-red-100 text-red-800 rounded-lg text-sm">
+              Error: {error}. Please check that Ollama is running with the gemma3:4b model loaded.
+            </div>
+          )}
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -177,6 +248,7 @@ const Chatbot = ({ user }) => {
                   </div>
                 </div>
               )}
+              <div ref={messagesEndRef} />
             </div>
             
             {/* Chat Input */}
@@ -192,12 +264,13 @@ const Chatbot = ({ user }) => {
                 <button 
                   type="submit"
                   className="bg-emerald-600 text-white p-3 rounded-r-lg hover:bg-emerald-700 transition"
+                  disabled={isLoading}
                 >
                   <FaPaperPlane />
                 </button>
               </form>
               <p className="text-xs text-gray-500 mt-2">
-                *This is a demonstration interface. The AI assistant is not fully functional yet.
+                *This interface requires Ollama running with the gemma3:4b model loaded.
               </p>
             </div>
           </motion.div>
@@ -274,4 +347,4 @@ const Chatbot = ({ user }) => {
   );
 };
 
-export default Chatbot; 
+export default Chatbot;
