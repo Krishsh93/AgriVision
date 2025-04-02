@@ -30,6 +30,57 @@ const Chatbot = ({ user }) => {
     "Signs of nitrogen deficiency in plants?"
   ];
 
+  const formatMessage = (text) => {
+    // Check if the message contains numbered steps or bullet points
+    if (text.includes('*') || text.match(/^\d+\./m)) {
+      return (
+        <div className="space-y-3">
+          {text.split('\n').map((line, index) => {
+            // Handle numbered steps
+            if (line.match(/^\d+\./)) {
+              return (
+                <div key={index} className="flex items-start space-x-3">
+                  <div className="flex-shrink-0 w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 font-semibold">
+                    {line.match(/^\d+/)[0]}
+                  </div>
+                  <div className="flex-grow">
+                    <p className="text-gray-800">{line.replace(/^\d+\.\s*/, '')}</p>
+                  </div>
+                </div>
+              );
+            }
+            // Handle bullet points
+            else if (line.startsWith('*')) {
+              return (
+                <div key={index} className="flex items-start space-x-3">
+                  <div className="flex-shrink-0 w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
+                    •
+                  </div>
+                  <div className="flex-grow">
+                    <p className="text-gray-800">{line.replace(/^\*\s*/, '')}</p>
+                  </div>
+                </div>
+              );
+            }
+            // Handle important notes
+            else if (line.startsWith('*Important:*')) {
+              return (
+                <div key={index} className="mt-4 p-3 bg-yellow-50 border-l-4 border-yellow-400">
+                  <p className="text-yellow-800 font-medium">
+                    {line.replace('*Important:*', '')}
+                  </p>
+                </div>
+              );
+            }
+            // Regular text
+            return <p key={index} className="text-gray-800">{line}</p>;
+          })}
+        </div>
+      );
+    }
+    return <p className="text-gray-800">{text}</p>;
+  };
+
   const generateResponse = async (userMessage) => {
     setError(null); // Reset error state
     try {
@@ -224,7 +275,9 @@ const Chatbot = ({ user }) => {
                           <FaUser size={12} />
                         </div>
                       )}
-                      <p className={chat.sender === 'user' ? 'order-1 mr-2' : ''}>{chat.text}</p>
+                      <div className={chat.sender === 'user' ? 'order-1 mr-2' : ''}>
+                        {formatMessage(chat.text)}
+                      </div>
                     </div>
                     <p className={`text-xs text-gray-500 ${chat.sender === 'user' ? 'text-right' : 'text-left'}`}>
                       {chat.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
